@@ -1,0 +1,13 @@
+[Unit]
+Description=Browser Use API Service
+After=network.target
+
+[Service]
+User=browseruse
+WorkingDirectory=/home/browseruse/browser-use
+ExecStart=/home/browseruse/browser_use_env/bin/python /home/browseruse/browser-use/api_server.py
+Restart=always
+Environment=PYTHONUNBUFFERED=1
+
+[Install]
+WantedBy=multi-user.target
