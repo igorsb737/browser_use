@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interface AI de Uso do Navegador</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+            color: #333;
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+        .container {
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        textarea, select, input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-family: inherit;
+            font-size: 14px;
+        }
+        textarea {
+            height: 120px;
+            resize: vertical;
+        }
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        .checkbox-group label {
+            margin-bottom: 0;
+            margin-left: 10px;
+            font-weight: normal;
+        }
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 16px;
+            margin: 4px 2px;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #2980b9;
+        }
+        .info-box {
+            background-color: #e8f4f8;
+            border-left: 4px solid #3498db;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 0 4px 4px 0;
+        }
+        .warning {
+            color: #856404;
+            background-color: #fff3cd;
+            border: 1px solid #ffeeba;
+            padding: 15px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+        }
+        code {
+            background-color: #f8f8f8;
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-family: Consolas, Monaco, 'Andale Mono', monospace;
+            font-size: 14px;
+            color: #e74c3c;
+        }
+        .result {
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 15px;
+            margin-top: 20px;
+            min-height: 100px;
+            white-space: pre-wrap;
+            position: relative;
+        }
+        .copy-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: transparent;
+            border: none;
+            cursor: pointer;
+            padding: 5px;
+            font-size: 18px;
+            color: #3498db;
+        }
+        .copy-btn:hover {
+            color: #2980b9;
+        }
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        .saved-configs {
+            flex-grow: 1;
+            margin-right: 10px;
+        }
+        .config-actions {
+            display: flex;
+            gap: 10px;
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <h1>Interface AI de Uso do Navegador</h1>
+    
+    <div class="info-box">
+        <p></p>
+    </div>
+
+    <div class="container">
+        <h2>Gerador de Script de Uso do Navegador</h2>
+        
+        <div class="form-group">
+            <label for="task">Tarefa para o Agente AI:</label>
+            <textarea id="task" placeholder="Descreva a tarefa que você quer que o agente AI execute..."></textarea>
+        </div>
+        
+        <div class="form-group">
+            <label for="model">Modelo LLM:</label>
+            <select id="model">
+                <option value="gpt-4o-mini">GPT-4o Mini (Melhor custo-benefício)</option>
+                <option value="gpt-4o">GPT-4o (Melhor desempenho)</option>
+                <option value="gpt-3.5-turbo">GPT-3.5 Turbo (Custo mais baixo)</option>
+                <option value="gemini-2.0-exp">Gemini 2.0 Experimental</option>
+                <option value="gemini-2.0-flash-exp">Gemini 2.0 Flash Experimental</option>
+                <option value="deepseek-v3">DeepSeek-V3 (30 vezes mais barato que GPT-4o)</option>
+                <option value="deepseek-r1">DeepSeek-R1 (Modelo avançado da DeepSeek)</option>
+            </select>
+        </div>
+        
+        <div class="form-group">
+            <label for="temperature">Temperatura (0.0 - 1.0):</label>
+            <input type="range" id="temperature" min="0" max="1" step="0.1" value="0.0">
+            <span id="temperatureValue">0.0</span>
+        </div>
+        
+        <div class="checkbox-group">
+            <input type="checkbox" id="headless">
+            <label for="headless">Executar em modo headless (navegador invisível)</label>
+        </div>
+        
+        <div class="checkbox-group">
+            <input type="checkbox" id="useVision" checked>
+            <label for="useVision">Habilitar recursos de visão</label>
+        </div>
+        
+        <div class="checkbox-group">
+            <input type="checkbox" id="closeBrowser" checked>
+            <label for="closeBrowser">Fechar navegador ao terminar a tarefa</label>
+        </div>
+        
+        <div class="checkbox-group">
+            <input type="checkbox" id="useCustomBrowser">
+            <label for="useCustomBrowser">Usar meu navegador Chrome instalado</label>
+        </div>
+        
+        <div class="form-group">
+            <label for="customInstructions">Instruções Personalizadas (opcional):</label>
+            <textarea id="customInstructions" placeholder="Adicione instruções personalizadas para modificar o comportamento do agente..."></textarea>
+        </div>
+        
+        <div class="form-group">
+            <label for="browserPath">Caminho Personalizado do Navegador (opcional):</label>
+            <input type="text" id="browserPath" placeholder="ex: C:\Program Files\Google\Chrome\Application\chrome.exe" value="C:\Program Files\Google\Chrome\Application\chrome.exe">
+        </div>
+        
+        <div class="button-group">
+            <select id="savedConfigs" class="saved-configs">
+                <option value="">-- Configurações Salvas --</option>
+            </select>
+            <div class="config-actions">
+                <button onclick="loadConfig()">Carregar</button>
+                <button onclick="saveConfig()">Salvar Configuração</button>
+                <button onclick="deleteConfig()">Excluir</button>
+            </div>
+        </div>
+        
+        <div class="button-group">
+            <button onclick="generateScript()">Gerar Script</button>
+            <button onclick="startScript()" style="background-color: #27ae60;">Iniciar</button>
+        </div>
+        
+        <div class="result" id="scriptResult">
+            <button class="copy-btn" onclick="copyScript()" title="Copiar script"><i class="fas fa-copy"></i></button>
+            <p>O script gerado aparecerá aqui...</p>
+        </div>
+    </div>
+
+    <script>
+        function generateScript() {
+            const task = document.getElementById("task").value;
+            const model = document.getElementById("model").value;
+            const temperature = document.getElementById("temperature").value;
+            document.getElementById("temperatureValue").textContent = temperature; // Atualiza o valor exibido
+            const headless = document.getElementById("headless").checked;
+            const useVision = document.getElementById("useVision").checked;
+            const closeBrowser = document.getElementById("closeBrowser").checked;
+            const useCustomBrowser = document.getElementById("useCustomBrowser").checked;
+            const customInstructions = document.getElementById("customInstructions").value;
+            const browserPath = document.getElementById("browserPath").value;
+            
+            // Início do script Python
+            let script = `from langchain_openai import ChatOpenAI
+from langchain_google_genai import ChatGoogleGenerativeAI
+from browser_use import Agent, Browser, BrowserConfig
+from dotenv import load_dotenv
+from pydantic import SecretStr
+import asyncio
+import os
+
+# Carrega variáveis de ambiente do arquivo .env
+load_dotenv()
+
+# Configuração de API keys
+openai_api_key = "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"
+google_api_key = "AIzaSyDziAVXeMco5Vez2GoCHBnciph4WOUVofU"  # Chave API do Google para Gemini
+
+async def main():
+    # Inicializa o modelo LLM
+    print(f"\\n=== Configurando LLM: ${model} (Temperatura: ${temperature}) ===")
+    
+    if "${model}" == "deepseek-v3" or "${model}" == "deepseek-r1":
+        # Usando DeepSeek API
+        print("Usando DeepSeek API")
+        llm = ChatOpenAI(
+            base_url='https://api.deepseek.com/v1',
+            model='${model === "deepseek-r1" ? "deepseek-coder" : "deepseek-chat"}',
+            api_key="sk-e0fe9106c3c14888b4322d8bf9f1b62f",
+            temperature=${temperature},
+        )
+    elif "${model}" == "gemini-2.0-flash-exp" or "${model}" == "gemini-2.0-exp":
+        # Usando Google Gemini API
+        print("Usando Google Gemini API")
+        llm = ChatGoogleGenerativeAI(
+            model="${model}",
+            temperature=${temperature},
+            api_key=SecretStr(google_api_key),
+        )
+    else:
+        # Usando OpenAI API
+        print("Usando OpenAI API")
+        llm = ChatOpenAI(
+            model="${model}",
+            temperature=${temperature},
+            api_key=openai_api_key,
+        )
+    
+    # Configura o navegador
+    browser_config = BrowserConfig(
+        headless=${headless ? 'True' : 'False'},
+        disable_security=True,
+        _force_keep_browser_alive=True,  # Força manter o navegador aberto
+    )`;
+            
+            // Adiciona caminho personalizado do navegador se necessário
+            if (useCustomBrowser && browserPath) {
+                script += `
+    browser_config.browser_instance_path = '${browserPath.replace(/\\/g, '\\\\')}'`;
+            }
+            
+            // Continua o script
+            script += `
+    
+    # Cria instância do navegador
+    browser = Browser(config=browser_config)
+    
+    # Cria o agente com o modelo
+    agent = Agent(
+        task="""${task.replace(/"/g, '\\"').replace(/\n/g, '\\n')}""",
+        llm=llm,
+        browser=browser,
+        use_vision=${useVision ? 'True' : 'False'},
+        save_conversation_path="logs/conversation"`;
+            
+            // Adiciona instruções personalizadas se fornecidas
+            if (customInstructions) {
+                script += `,
+        extend_system_message="""
+${customInstructions}
+"""`;
+            }
+            
+            // Fecha o parêntese do Agent
+            script += `
+    )
+    
+    # Cria diretório de logs se não existir
+    os.makedirs("logs", exist_ok=True)
+    
+    # Executa o agente
+    print(f"""
+Iniciando agente de Uso do Navegador com a tarefa: ${task.replace(/"/g, '\\"').replace(/\n/g, '\\n')}""")
+    result = await agent.run()
+    
+    # Imprime o resultado
+    print("\\n=== RESULTADO DO AGENTE ===")
+    print(result)
+    print("===================")
+    
+    # Mantendo o navegador aberto com pausa explícita
+    print("\\nNavegador mantido aberto. Pressione Enter para encerrar o programa...")
+    
+    # Aguarda entrada do usuário para manter o programa rodando e o navegador aberto
+    input()
+    
+    print("Programa encerrado. O navegador pode ser fechado manualmente.")`;
+            
+            // Finaliza o script
+            script += `
+
+if __name__ == "__main__":
+    asyncio.run(main())`;
+            
+            // Atualiza a exibição do script na interface
+            const scriptResultDiv = document.getElementById("scriptResult");
+            
+            // Preserva o botão de cópia
+            const copyButton = scriptResultDiv.querySelector(".copy-btn");
+            scriptResultDiv.innerHTML = '';
+            scriptResultDiv.appendChild(copyButton);
+            
+            // Adiciona o script em um elemento pre para melhor formatação
+            const preElement = document.createElement("pre");
+            preElement.textContent = script;
+            scriptResultDiv.appendChild(preElement);
+        }
+
+        // Adiciona um event listener para atualizar o valor da temperatura exibido
+        document.addEventListener('DOMContentLoaded', function() {
+            const temperatureSlider = document.getElementById('temperature');
+            const temperatureValue = document.getElementById('temperatureValue');
+            
+            temperatureSlider.addEventListener('input', function() {
+                temperatureValue.textContent = this.value;
+            });
+        });
+        
+        function copyScript() {
+            const scriptText = document.getElementById("scriptResult").querySelector("pre").textContent;
+            navigator.clipboard.writeText(scriptText)
+                .then(() => {
+                    alert("Script copiado para a área de transferência!");
+                })
+                .catch(err => {
+                    console.error('Erro ao copiar texto: ', err);
+                });
+        }
+        
+        // Função para gerar, salvar e executar o script
+        function startScript() {
+            // Primeiro gera o script
+            generateScript();
+            
+            // Obtém o conteúdo do script
+            const scriptText = document.getElementById("scriptResult").querySelector("pre").textContent;
+            
+            // Modifica o script para incluir logs e código de auto-execução
+            const modifiedScript = `#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+# Script gerado automaticamente pela Interface AI de Uso do Navegador
+# Este arquivo é auto-executável - basta clicar duas vezes nele para executar
+
+import os
+import sys
+import subprocess
+import logging
+import platform
+
+# Configurando logs
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
+
+# Função para criar um arquivo de log
+def setup_file_logger():
+    log_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "browser_agent_log.txt")
+    file_handler = logging.FileHandler(log_file, mode='w')
+    file_handler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
+    logger.addHandler(file_handler)
+    return log_file
+
+# Configurar logger de arquivo
+log_file = setup_file_logger()
+logger.info("Iniciando script de automação do navegador")
+logger.info(f"Sistema operacional: {platform.system()} {platform.release()}")
+
+# Código principal do script
+${scriptText}
+
+# Código para manter a janela aberta no Windows após a execução
+if platform.system() == "Windows":
+    logger.info("Script concluído. Pressione Enter para sair...")
+    input("Script concluído. Pressione Enter para sair...")
+`;
+            
+            // Cria um objeto Blob com o conteúdo do script
+            const scriptBlob = new Blob([modifiedScript], { type: 'text/plain' });
+            const scriptUrl = URL.createObjectURL(scriptBlob);
+            
+            // Cria um link para download do script Python
+            const scriptLink = document.createElement('a');
+            scriptLink.href = scriptUrl;
+            scriptLink.download = 'browser_agent.py';
+            
+            // Adiciona o link ao documento (invisível)
+            document.body.appendChild(scriptLink);
+            
+            // Clica no link para iniciar o download
+            scriptLink.click();
+            
+            // Remove o link do documento
+            document.body.removeChild(scriptLink);
+            
+            // Libera a URL
+            URL.revokeObjectURL(scriptUrl);
+            
+            // Adiciona instruções na interface
+            const scriptResultDiv = document.getElementById("scriptResult");
+            const instructionElement = document.createElement("div");
+            instructionElement.innerHTML = `
+            <div style="margin-top: 20px; padding: 10px; background-color: #e8f4f8; border-radius: 4px;">
+                <h3>Arquivo criado na pasta de Downloads:</h3>
+                <ul>
+                    <li><strong>browser_agent.py</strong> - Script Python auto-executável</li>
+                </ul>
+                <p>Para executar o script:</p>
+                <ol>
+                    <li>Abra a pasta de Downloads</li>
+                    <li>Clique duas vezes no arquivo <code>browser_agent.py</code></li>
+                    <li>Se o Windows perguntar como abrir o arquivo, selecione "Python" na lista de programas</li>
+                </ol>
+                <p>O script criará automaticamente um arquivo de log <code>browser_agent_log.txt</code> na mesma pasta.</p>
+            </div>`;
+            scriptResultDiv.appendChild(instructionElement);
+        }
+        
+        // Funções para gerenciar configurações salvas
+        function saveConfig() {
+            const configName = prompt("Digite um nome para esta configuração:");
+            if (!configName) return;
+            
+            const config = {
+                task: document.getElementById("task").value,
+                model: document.getElementById("model").value,
+                temperature: document.getElementById("temperature").value,
+                headless: document.getElementById("headless").checked,
+                useVision: document.getElementById("useVision").checked,
+                closeBrowser: document.getElementById("closeBrowser").checked,
+                useCustomBrowser: document.getElementById("useCustomBrowser").checked,
+                customInstructions: document.getElementById("customInstructions").value,
+                browserPath: document.getElementById("browserPath").value
+            };
+            
+            // Recuperar configurações existentes
+            let savedConfigs = JSON.parse(localStorage.getItem("browserUseConfigs") || "{}");
+            
+            // Adicionar nova configuração
+            savedConfigs[configName] = config;
+            
+            // Salvar no localStorage
+            localStorage.setItem("browserUseConfigs", JSON.stringify(savedConfigs));
+            
+            // Atualizar lista de configurações
+            updateConfigList();
+            
+            alert(`Configuração "${configName}" salva com sucesso!`);
+        }
+        
+        function loadConfig() {
+            const selectElement = document.getElementById("savedConfigs");
+            const configName = selectElement.value;
+            
+            if (!configName) {
+                alert("Selecione uma configuração para carregar.");
+                return;
+            }
+            
+            // Recuperar configurações
+            const savedConfigs = JSON.parse(localStorage.getItem("browserUseConfigs") || "{}");
+            const config = savedConfigs[configName];
+            
+            if (!config) {
+                alert("Configuração não encontrada.");
+                return;
+            }
+            
+            // Preencher o formulário com a configuração carregada
+            document.getElementById("task").value = config.task || "";
+            document.getElementById("model").value = config.model || "gpt-4o-mini";
+            document.getElementById("temperature").value = config.temperature || "0.0";
+            document.getElementById("headless").checked = config.headless || false;
+            document.getElementById("useVision").checked = config.useVision !== undefined ? config.useVision : true;
+            document.getElementById("closeBrowser").checked = config.closeBrowser !== undefined ? config.closeBrowser : true;
+            document.getElementById("useCustomBrowser").checked = config.useCustomBrowser || false;
+            document.getElementById("customInstructions").value = config.customInstructions || "";
+            document.getElementById("browserPath").value = config.browserPath || "";
+            
+            alert(`Configuração "${configName}" carregada com sucesso!`);
+        }
+        
+        function deleteConfig() {
+            const selectElement = document.getElementById("savedConfigs");
+            const configName = selectElement.value;
+            
+            if (!configName) {
+                alert("Selecione uma configuração para excluir.");
+                return;
+            }
+            
+            if (!confirm(`Tem certeza que deseja excluir a configuração "${configName}"?`)) {
+                return;
+            }
+            
+            // Recuperar configurações
+            let savedConfigs = JSON.parse(localStorage.getItem("browserUseConfigs") || "{}");
+            
+            // Remover configuração
+            delete savedConfigs[configName];
+            
+            // Salvar no localStorage
+            localStorage.setItem("browserUseConfigs", JSON.stringify(savedConfigs));
+            
+            // Atualizar lista de configurações
+            updateConfigList();
+            
+            alert(`Configuração "${configName}" excluída com sucesso!`);
+        }
+        
+        function updateConfigList() {
+            const selectElement = document.getElementById("savedConfigs");
+            const savedConfigs = JSON.parse(localStorage.getItem("browserUseConfigs") || "{}");
+            
+            // Limpar opções existentes, mantendo apenas a opção padrão
+            selectElement.innerHTML = '<option value="">-- Configurações Salvas --</option>';
+            
+            // Adicionar cada configuração como uma opção
+            for (const configName in savedConfigs) {
+                const option = document.createElement("option");
+                option.value = configName;
+                option.textContent = configName;
+                selectElement.appendChild(option);
+            }
+        }
+        
+        // Carregar configurações salvas quando a página é carregada
+        window.onload = function() {
+            updateConfigList();
+        };
+    </script>
+</body>
+</html>
